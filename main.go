@@ -1,0 +1,48 @@
+package main
+
+import (
+	"errors"
+
+	"example.com/musicafy_be/components/appctx"
+	"example.com/musicafy_be/router"
+	"example.com/musicafy_be/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/rs/zerolog/log"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+func main() {
+	config, err := utils.LoadConfig(".")
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot load config")
+	}
+
+	dsn := "host=localhost user=root password=localhost1234 dbname=musicafy port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot open database")
+	}
+
+	runDBMigration(config.MigrationURL, config.DBSource)
+
+	appContext := appctx.NewAppContext(db)
+
+	r := gin.Default()
+	v1 := r.Group("/v1")
+	router.SetupRoute(appContext, v1)
+	r.Run()
+}
+
+func runDBMigration(migrationURL string, dbSource string) {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot create new migrate instance")
+	}
+
+	if err = migration.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		log.Fatal().Err(err).Msg("failed to run migrate up")
+	}
+	log.Info().Msg("db migrated successfully")
+}
