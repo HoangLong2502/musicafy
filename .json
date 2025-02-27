@@ -1,0 +1,10 @@
+{
+    "a": {
+        "a": "X5BM3w8N7MKozC0B85o4KMlzLZKhV00y",
+        "b": "acOrvUS15XRW2o9JksiK1KgQ6Vbds8ZW",
+        "c": {
+            "privateKey": "92cebd08ba137aac6c0ec803ce38c111fd736426",
+            "publicKey": "54a08d682ab8776d23c31cf0be72c679099024db"
+        }
+    }
+}

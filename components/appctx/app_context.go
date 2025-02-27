@@ -1,19 +1,22 @@
 package appctx
 
-import "gorm.io/gorm"
+import (
+	"example.com/musicafy_be/components/token"
+	"gorm.io/gorm"
+)
 
 type AppContext interface {
 	GetMainDBConnection() *gorm.DB
 	// UploadProvider() upload.UploadProvider
 	// GetWorker() woker.TaskDistributor
-	// GetTokenMaker() token.TokenMaker
+	GetTokenMaker() token.TokenMaker
 }
 
 type appCtx struct {
 	db *gorm.DB
 	// uploadProvider upload.UploadProvider
 	// worker         woker.TaskDistributor
-	// token          token.TokenMaker
+	token token.TokenMaker
 }
 
 func NewAppContext(db *gorm.DB) *appCtx {
@@ -25,3 +28,4 @@ func NewAppContext(db *gorm.DB) *appCtx {
 func (ctx *appCtx) GetMainDBConnection() *gorm.DB {
 	return ctx.db
 }
+func (ctx *appCtx) GetTokenMaker() token.TokenMaker { return ctx.token }
