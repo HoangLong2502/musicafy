@@ -4,10 +4,14 @@ import (
 	"errors"
 
 	"example.com/musicafy_be/components/appctx"
+	"example.com/musicafy_be/middleware"
 	"example.com/musicafy_be/router"
 	"example.com/musicafy_be/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
 	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -30,6 +34,7 @@ func main() {
 	appContext := appctx.NewAppContext(db)
 
 	r := gin.Default()
+	r.Use(middleware.Recover(appContext))
 	v1 := r.Group("/v1")
 	router.SetupRoute(appContext, v1)
 	r.Run()

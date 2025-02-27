@@ -1,0 +1,56 @@
+Project musicafy {
+  database_type: 'PostgresQL'
+  Note: '''
+    # Musicafy Database
+  '''
+}
+
+enum gender {
+  "nam"
+  "nữ"
+  "khác"
+}
+
+// =============== USER ===============
+
+Table users as U {
+  id serial [pk]
+  username varchar [unique, not null]
+  hashed_password varchar [not null]
+  full_name varchar [not null]
+  is_verify boolean [not null, default: false]
+  email varchar
+  gender gender
+  licence varchar
+  dob timestamp
+  active bool [not null, default: true]
+  avatar varchar(255)
+  updated_at timestamptz
+  password_changed_at timestamptz [not null, default: '0001-01-01 00:00:00Z']
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Table sessions {
+  id serial [pk]
+  username varchar [not null]
+  refresh_token varchar [not null]
+  user_agent varchar [not null]
+  client_ip varchar [not null]
+  is_blocked boolean [not null, default: false]
+  expires_at timestamptz [not null]
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Ref: sessions.username > U.username [delete: cascade]
+
+Table verifies {
+  id serial [pk]
+  username varchar [not null]
+  email varchar [not null]
+  secret_code varchar [not null]
+  is_used bool [not null, default: false]
+  created_at timestamptz [not null, default: `now()`]
+  expired_at timestamptz [not null, default: `(now() + interval '15 minutes')`]
+}
+
+Ref: verifies.username > U.username [delete: cascade]
