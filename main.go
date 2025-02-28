@@ -4,6 +4,8 @@ import (
 	"errors"
 
 	"example.com/musicafy_be/components/appctx"
+	"example.com/musicafy_be/components/token"
+	zingmp3 "example.com/musicafy_be/components/zing_mp3"
 	"example.com/musicafy_be/middleware"
 	"example.com/musicafy_be/router"
 	"example.com/musicafy_be/utils"
@@ -31,7 +33,14 @@ func main() {
 
 	runDBMigration(config.MigrationURL, config.DBSource)
 
-	appContext := appctx.NewAppContext(db)
+	tokenMaker, err := token.NewPasetoMaker(config.TOKEN_SYMMETRIC_KEY)
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot create token maker")
+	}
+
+	zingmp3 := zingmp3.NewZingMp3Api(config.ZINGMP3_AC_URL, config.ZINGMP3_URL, "", "")
+
+	appContext := appctx.NewAppContext(db, tokenMaker, zingmp3)
 
 	r := gin.Default()
 	r.Use(middleware.Recover(appContext))
