@@ -1,0 +1,31 @@
+package songmodels
+
+type Artists struct {
+	ID          int     `json:"_" gorm:"primaryKey;column:id"`
+	MaskId      string  `json:"mask_id" gorm:"column:mask_id"`
+	Name        string  `json:"name" gorm:"column:name"`
+	Sportlight  bool    `json:"sportlight" gorm:"column:sportlight"`
+	Alias       string  `json:"alias" gorm:"column:alias"`
+	Thumbnail   *string `json:"thumbnail" gorm:"column:thumbnail"`
+	ThumbnailM  *string `json:"thumbnailM" gorm:"column:thumbnailM"`
+	PlaylistId  *string `json:"playlist_id" gorm:"column:playlistId"`
+	TotalFollow int     `json:"total_follow" gorm:"column:totalFollow"`
+}
+
+func (Artists) TableName() string {
+	return "artists"
+}
+
+type Composers struct {
+	ID         int     `json:"_" gorm:"primaryKey;column:id"`
+	MaskId     string  `json:"mask_id" gorm:"column:mask_id"`
+	Name       string  `json:"name" gorm:"column:name"`
+	Sportlight bool    `json:"sportlight" gorm:"column:sportlight"`
+	Alias      string  `json:"alias" gorm:"column:alias"`
+	Thumbnail  *string `json:"thumbnail" gorm:"column:thumbnail"`
+	Cover      *string `json:"cover" gorm:"column:cover"`
+}
+
+func (Composers) TableName() string {
+	return "composers"
+}

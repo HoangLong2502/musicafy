@@ -54,3 +54,72 @@ Table verifies {
 }
 
 Ref: verifies.username > U.username [delete: cascade]
+
+
+Table songs {
+  id serial [pk]
+  mask_id varchar(255) [not null]
+  title varchar(255) [not null]
+  alias varchar(255)
+  is_offical bool [default: true]
+  thumbnail varchar(255)
+  thumbnailM varchar(255)
+  duration int [not null, default: 0]
+  releaseDate int
+  album serial
+  distributor varchar(255)
+  hasLyric bool [not null, default: false]
+  like int [not null, default: 0]
+  listen int [not null, default: 0]
+  comment int [not null, default: 0]
+  audio_file varchar
+}
+
+Ref songs_artists: songs.id <> artists.id // many-to-many
+Ref songs_genres: songs.id <> genres.id // many-to-many
+Ref songs_composers: songs.id <> composers.id // many-to-many
+Ref: songs.album > albums.id [delete: set null]
+
+Table artists {
+  id serial [pk]
+  mask_id varchar(255) [not null]
+  name varchar(255)
+  spotlight boolean
+  alias varchar(255)
+  thumbnail varchar(255)
+  thumbnailM varchar(255)
+  playlistId varchar(20)
+  totalFollow int [not null, default: 0]
+}
+
+Table composers {
+  id serial [pk]
+  mask_id varchar(255) [not null]
+  name varchar(255)
+  spotlight boolean
+  alias varchar(255)
+  thumbnail varchar(255)
+  cover varchar(255)
+}
+
+Table albums {
+  id serial [pk]
+  mask_id varchar(255) [not null]
+  title varchar(255) [not null]
+  is_offical bool [default: true]
+  thumbnail varchar(255)
+  sortDescription varchar(255)
+  release_at int
+}
+
+Ref albums_artists: albums.id <> artists.id // many-to-many
+Ref albums_genres: albums.id <> genres.id // many-to-many
+
+Table genres {
+  id serial [pk]
+  mask_id varchar(255) [not null]
+  title varchar(255) [not null]
+  name varchar(255) [not null]
+  alias varchar(255)
+}
+

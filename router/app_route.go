@@ -15,6 +15,8 @@ func SetupRoute(appContext appctx.AppContext, v1 *gin.RouterGroup) {
 
 	song := v1.Group("/song")
 	{
-		song.GET("/list", ginsong.ListSong(appContext))
+		song.GET("/search-suggestions", ginsong.SearchSuggestion(appContext))
+		song.GET("/streaming", ginsong.StreamingSong(appContext))
+		song.GET("/info-detail", ginsong.SearchSuggestion(appContext))
 	}
 }
