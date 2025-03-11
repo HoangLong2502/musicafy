@@ -6,14 +6,16 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
+	"strings"
 )
 
 // e is url path request, n is query params string
 func GenerateHash(e string, n string) (sig string) {
-	fmt.Println("==== chuoi N", n)
+	fmt.Println("==== chuoi N", strings.ReplaceAll(n, "&", ""))
+
 	// Băm SHA256 để tạo r
 	sha256Hasher := sha256.New()
-	sha256Hasher.Write([]byte(n))
+	sha256Hasher.Write([]byte(strings.ReplaceAll(n, "&", "")))
 	r := hex.EncodeToString(sha256Hasher.Sum(nil))
 
 	// Tạo khóa HMAC-SHA512 với key

@@ -1,15 +1,16 @@
 package songmodels
 
 type Songs struct {
-	ID          int         `json:"_" gorm:"primaryKey;column:id"`
+	ID          int         `json:"-" gorm:"primaryKey;column:id"`
 	MaskId      string      `json:"mask_id" gorm:"column:mask_id"`
 	Title       string      `json:"title" gorm:"column:title"`
-	Alias       *string     `json:"alias" gorm:"column:alias"`
+	Alias       *string     `json:"alias,omitempty" gorm:"column:alias"`
 	IsOffical   bool        `json:"is_offical" gorm:"column:is_offical"`
 	Thumbnail   *string     `json:"thumbnail" gorm:"column:thumbnail"`
 	ThumbnailM  *string     `json:"thumbnailM" gorm:"column:thumbnailM"`
 	Duration    int         `json:"duration" gorm:"column:duration"`
-	Album       Albums      `json:"album,omitempty" gorm:"foreignKey:album"`
+	AlbumID     *int        `json:"album_id,omitempty" gorm:"column:album"`
+	Album       *Albums     `json:"album,omitempty" gorm:"foreignKey:AlbumID;references:ID"`
 	Artists     []Artists   `json:"artists,omitempty" gorm:"many2many:songs_artists"`
 	Composers   []Composers `json:"composers,omitempty" gorm:"many2many:songs_composers"`
 	Genres      []Genres    `json:"genres,omitempty" gorm:"many2many:songs_genres"`
@@ -27,12 +28,12 @@ func (Songs) TableName() string {
 }
 
 type Albums struct {
-	ID          int       `json:"_" gorm:"primaryKey;column:id"`
+	ID          int       `json:"-" gorm:"primaryKey;column:id"`
 	MaskId      string    `json:"mask_id" gorm:"column:mask_id"`
 	Title       string    `json:"title" gorm:"column:title"`
 	IsOffical   bool      `json:"is_offical" gorm:"column:is_offical"`
 	Thumbnail   *string   `json:"thumbnail" gorm:"column:thumbnail"`
-	Description int       `json:"description" gorm:"column:sortDescription"`
+	Description string    `json:"description" gorm:"column:sortDescription"`
 	ReleaseAt   int       `json:"release_at" gorm:"column:release_at"`
 	Artists     []Artists `json:"artists,omitempty" gorm:"many2many:albums_artists"`
 	Genres      []Genres  `json:"genres,omitempty" gorm:"many2many:songs_genres"`
@@ -43,14 +44,11 @@ func (Albums) TableName() string {
 }
 
 type Genres struct {
-	ID          int       `json:"_" gorm:"primaryKey;column:id"`
-	MaskId      string    `json:"mask_id" gorm:"column:mask_id"`
-	Title       string    `json:"title" gorm:"column:title"`
-	IsOffical   bool      `json:"is_offical" gorm:"column:is_offical"`
-	Thumbnail   *string   `json:"thumbnail" gorm:"column:thumbnail"`
-	Description int       `json:"description" gorm:"column:sortDescription"`
-	ReleaseAt   int       `json:"release_at" gorm:"column:release_at"`
-	Artists     []Artists `json:"artists,omitempty" gorm:"many2many:albums_artists"`
+	ID     int     `json:"-" gorm:"primaryKey;column:id"`
+	MaskId string  `json:"mask_id" gorm:"column:mask_id"`
+	Title  string  `json:"title" gorm:"column:title"`
+	Name   *string `json:"name" gorm:"column:name"`
+	Alias  *string `json:"alias" gorm:"column:alias"`
 }
 
 func (Genres) TableName() string {

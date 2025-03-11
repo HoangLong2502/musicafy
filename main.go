@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"example.com/musicafy_be/components/appctx"
+	"example.com/musicafy_be/components/mail"
 	"example.com/musicafy_be/components/token"
 	zingmp3 "example.com/musicafy_be/components/zing_mp3"
 	"example.com/musicafy_be/middleware"
@@ -38,9 +39,11 @@ func main() {
 		log.Fatal().Err(err).Msg("cannot create token maker")
 	}
 
-	zingmp3 := zingmp3.NewZingMp3Api(config.ZINGMP3_AC_URL, config.ZINGMP3_URL, "", "")
+	zingmp3 := zingmp3.NewZingMp3Api(config.ZINGMP3_AC_URL, config.ZINGMP3_URL, config.ZINGMP3_VERSION, config.ZINGMP3_API_KEY)
 
-	appContext := appctx.NewAppContext(db, tokenMaker, zingmp3)
+	mailer := mail.NewMailer(config.MAIL_SENDER, config.MAIL_PASSWORD, config.MAIL_ADDRESS)
+
+	appContext := appctx.NewAppContext(db, tokenMaker, zingmp3, mailer)
 
 	r := gin.Default()
 	r.Use(middleware.Recover(appContext))

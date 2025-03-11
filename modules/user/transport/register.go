@@ -34,6 +34,9 @@ func Register(appctx appctx.AppContext) func(*gin.Context) {
 			panic(err)
 		}
 
+		mailer := appctx.GetMailer()
+		mailer.SendMail(*arg.Email, "Welcome to Musicafy", "Welcome to Musicafy")
+
 		c.JSON(http.StatusOK, common.SimpleSuccessResponse(user))
 	}
 }

@@ -26,7 +26,7 @@ func extractTokenFromHeaderString(s string) (string, error) {
 	return parts[1], nil
 }
 
-func RequiredAuthn(appctx appctx.AppContext) func(*gin.Context) {
+func RequiredAuth(appctx appctx.AppContext) func(*gin.Context) {
 	tokenProvider := appctx.GetTokenMaker()
 	return func(c *gin.Context) {
 		token, err := extractTokenFromHeaderString(c.GetHeader("Authorization"))

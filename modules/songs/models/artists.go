@@ -1,10 +1,10 @@
 package songmodels
 
 type Artists struct {
-	ID          int     `json:"_" gorm:"primaryKey;column:id"`
-	MaskId      string  `json:"mask_id" gorm:"column:mask_id"`
-	Name        string  `json:"name" gorm:"column:name"`
-	Sportlight  bool    `json:"sportlight" gorm:"column:sportlight"`
+	ID     int    `json:"-" gorm:"primaryKey;column:id"`
+	MaskId string `json:"mask_id" gorm:"column:mask_id"`
+	Name   string `json:"name" gorm:"column:name"`
+	// Sportlight  bool    `json:"sportlight" gorm:"column:sportlight"`
 	Alias       string  `json:"alias" gorm:"column:alias"`
 	Thumbnail   *string `json:"thumbnail" gorm:"column:thumbnail"`
 	ThumbnailM  *string `json:"thumbnailM" gorm:"column:thumbnailM"`
@@ -17,13 +17,13 @@ func (Artists) TableName() string {
 }
 
 type Composers struct {
-	ID         int     `json:"_" gorm:"primaryKey;column:id"`
-	MaskId     string  `json:"mask_id" gorm:"column:mask_id"`
-	Name       string  `json:"name" gorm:"column:name"`
-	Sportlight bool    `json:"sportlight" gorm:"column:sportlight"`
-	Alias      string  `json:"alias" gorm:"column:alias"`
-	Thumbnail  *string `json:"thumbnail" gorm:"column:thumbnail"`
-	Cover      *string `json:"cover" gorm:"column:cover"`
+	ID        int     `json:"-" gorm:"primaryKey;column:id"`
+	MaskId    string  `json:"mask_id" gorm:"column:mask_id"`
+	Name      string  `json:"name" gorm:"column:name"`
+	Spotlight bool    `json:"spotlight" gorm:"column:spotlight"`
+	Alias     string  `json:"alias" gorm:"column:alias"`
+	Thumbnail *string `json:"thumbnail" gorm:"column:thumbnail"`
+	Cover     *string `json:"cover" gorm:"column:cover"`
 }
 
 func (Composers) TableName() string {

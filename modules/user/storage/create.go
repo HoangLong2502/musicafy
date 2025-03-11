@@ -29,13 +29,10 @@ func (s *store) CreateVerify(ctx context.Context, data usermodels.Verify) (*int,
 	return &id, nil
 }
 
-func (s *store) CreateSession(ctx context.Context, data usermodels.Session) (*string, error) {
+func (s *store) CreateSession(ctx context.Context, data usermodels.Session) (*usermodels.Session, error) {
 	results := s.db.Table(usermodels.Session{}.TableName()).Create(&data)
 	if results.Error != nil {
 		return nil, common.ErrDB(results.Error)
 	}
-
-	id := data.ID.String()
-
-	return &id, nil
+	return &data, nil
 }

@@ -11,7 +11,7 @@ type SearchSuggestionReq struct {
 }
 
 type searchSuggestionStore interface {
-	FindSong(id string) (songmodels.Songs, error)
+	FindSong(id string) (*songmodels.Songs, error)
 	CreateSong(data songmodels.Songs) (*songmodels.Songs, error)
 }
 
@@ -28,33 +28,9 @@ func NewSearchSuggestionBiz(store searchSuggestionStore) searchSuggestionBiz {
 func (biz *searchSuggestionBiz) SearchSuggestion(appctx appctx.AppContext, params SearchSuggestionReq) ([]songmodels.Songs, error) {
 	zingApi := appctx.GetZingmp3Api()
 	zingSongs := zingApi.SuggestionSong(params.Search, params.Limit)
-	var songs []songmodels.Songs
-	for _, e := range zingSongs {
-		// song, err := biz.store.FindSong(e.ID)
-		// if err != nil {
-		// 	if err.Error() == "record not found" {
-		// 		song_ins, err := biz.store.CreateSong(songmodels.Songs{
-		// 			MaskId:    e.ID,
-		// 			Title:     e.Title,
-		// 			Thumbnail: &e.Thumb,
-		// 			Duration:  e.Duration,
-		// 		})
-		// 		if err != nil {
-		// 			return songs, err
-		// 		}
-		// 		song = *song_ins
-		// 	} else {
-		// 		return songs, err
-		// 	}
-
-		// }
-		songs = append(songs, songmodels.Songs{
-			MaskId:    e.ID,
-			Title:     e.Title,
-			Thumbnail: &e.Thumb,
-			Duration:  e.Duration,
-		})
+	songs := make([]songmodels.Songs, len(zingSongs))
+	for i, e := range zingSongs {
+		songs[i] = e.ToModelDb()
 	}
-
 	return songs, nil
 }
