@@ -3,6 +3,7 @@ package userbiz
 import (
 	"context"
 	"errors"
+	"time"
 
 	"example.com/musicafy_be/common"
 	"example.com/musicafy_be/components/token"
@@ -10,9 +11,27 @@ import (
 	"example.com/musicafy_be/utils"
 )
 
+type LoginReq struct {
+	Username  *string `json:"username,omitempty"`
+	Password  *string `json:"password,omitempty"`
+	Email     *string `json:"email,omitempty"`
+	ID        *int    `json:"id,omitempty"`
+	UserAgent *string `json:"user_agent,omitempty"`
+	ClientIp  *string `json:"client_ip,omitempty"`
+}
+
+type LoginRes struct {
+	Session               *usermodels.Session `json:"session,omitempty"`
+	AccessToken           string              `json:"access_token"`
+	RefreshToken          string              `json:"refresh_token"`
+	AccessTokenExpiresAt  time.Time           `json:"access_token_expires_at"`
+	RefreshTokenExpiresAt time.Time           `json:"refresh_token_expires_at"`
+	User                  usermodels.User     `json:"data"`
+}
+
 type LoginStore interface {
-	FindUser(ctx context.Context, arg usermodels.User) (usermodels.User, error)
-	CreateSession(ctx context.Context, arg usermodels.Session) (*string, error)
+	FindUser(arg usermodels.AccountQueries) (usermodels.User, error)
+	CreateSession(ctx context.Context, arg usermodels.Session) (*usermodels.Session, error)
 }
 
 type loginBiz struct {
@@ -25,9 +44,11 @@ func NewLoginBiz(store LoginStore) *loginBiz {
 	}
 }
 
-func (biz *loginBiz) LoginBiz(ctx context.Context, arg usermodels.LoginReq, token token.TokenMaker) (*usermodels.LoginRes, error) {
-	user, err := biz.store.FindUser(ctx, usermodels.User{
+func (biz *loginBiz) LoginBiz(ctx context.Context, arg LoginReq, token token.TokenMaker) (*LoginRes, error) {
+	user, err := biz.store.FindUser(usermodels.AccountQueries{
 		Username: arg.Username,
+		Email:    arg.Email,
+		ID:       arg.ID,
 	})
 	if err != nil {
 		return nil, err
@@ -35,20 +56,20 @@ func (biz *loginBiz) LoginBiz(ctx context.Context, arg usermodels.LoginReq, toke
 	if !user.IsActive {
 		return nil, common.ErrInvalidRequest(errors.New("account inactive"))
 	}
-
-	if err = utils.CheckPassword(arg.Password, user.HashedPassword); err != nil {
-		return nil, usermodels.ErrUsernameOrPasswordInvalid
+	if password := *arg.Password; arg.Password != nil {
+		if err = utils.CheckPassword(password, user.HashedPassword); err != nil {
+			return nil, usermodels.ErrUsernameOrPasswordInvalid
+		}
 	}
 
 	accressToken, accressTokenPayload, _ := token.CreateToken(user)
 	refreshToken, refreshTokenPayload, _ := token.CreateToken(user)
 
 	session, err := biz.store.CreateSession(ctx, usermodels.Session{
-		ID:           refreshTokenPayload.ID,
 		Username:     user.Username,
 		RefreshToken: refreshToken,
 		// UserAgent:    metadata.UserAgent,
-		ClientIp:  arg.ClientIp,
+		ClientIp:  *arg.ClientIp,
 		IsBlocked: false,
 		ExpiresAt: refreshTokenPayload.ExpireAt,
 	})
@@ -57,9 +78,9 @@ func (biz *loginBiz) LoginBiz(ctx context.Context, arg usermodels.LoginReq, toke
 		// return nil, status.Errorf(codes.Internal, "failed to create session: %e", err)
 	}
 
-	res := usermodels.LoginRes{
+	res := LoginRes{
 		User:                  user,
-		SessionId:             *session,
+		Session:               session,
 		AccessToken:           accressToken,
 		RefreshToken:          refreshToken,
 		AccessTokenExpiresAt:  accressTokenPayload.ExpireAt,

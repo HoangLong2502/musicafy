@@ -6,8 +6,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
+	"example.com/musicafy_be/common"
 	"github.com/rs/zerolog/log"
 )
 
@@ -27,109 +29,138 @@ func NewZingMp3Api(urlAc string, url string, version string, apiKey string) Zing
 	}
 }
 
-func (api *ZingMp3API) SuggestionSong(query string, num int) []Song {
-	baseURL := fmt.Sprintf("%s/v1/web/ac-suggestions", api.urlAc)
-	// Xây dựng query params động
+// makeRequest thực hiện HTTP request với các tham số chung
+func (api *ZingMp3API) makeRequest(method, url string, params url.Values, needCookie bool) ([]byte, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, common.NewCustomError(err, "Error creating request", "lỗi tạo request", "makeRequest")
+	}
+
+	if needCookie {
+		cookie := GetCookie()
+		req.Header.Add("cookie", cookie)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, common.NewCustomError(err, "Error sending request", "lỗi gửi request", "makeRequest")
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, common.NewCustomError(err, "Error reading response", "lỗi đọc response", "makeRequest")
+	}
+
+	return body, nil
+}
+
+// buildRequestURL tạo URL với các tham số
+func (api *ZingMp3API) buildRequestURL(doamin string, path string, params url.Values) string {
+	return fmt.Sprintf("%s%s?%s", doamin, path, params.Encode())
+}
+
+func (api *ZingMp3API) SuggestionSong(query string, num int) []SongSearch {
 	params := url.Values{}
 	params.Add("num", fmt.Sprintf("%d", num))
 	params.Add("query", query)
 	params.Add("language", "vi")
-	// Tạo URL đầy đủ
-	fullURL := fmt.Sprintf("%s?%s", baseURL, params.Encode())
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", fullURL, nil)
+	fullURL := api.buildRequestURL(api.urlAc, "/v1/web/ac-suggestions", params)
+	body, err := api.makeRequest("GET", fullURL, params, false)
 	if err != nil {
-		fmt.Println("Error creating request:", err)
-		panic(err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error sending request:", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response:", err)
-		panic(err)
+		log.Error().Err(err).Msg("Error in SuggestionSong")
+		return nil
 	}
 
 	var res resSuggestion
-	err = json.Unmarshal(body, &res)
-	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
-		panic(err)
+	if err := json.Unmarshal(body, &res); err != nil {
+		log.Error().Err(err).Msg("Error unmarshalling JSON in SuggestionSong")
+		return nil
 	}
+
 	if res.Err != 0 {
-		panic(res.Message)
+		log.Error().Msg(res.Message)
+		return nil
 	}
-	fmt.Println(string(body))
+
 	return res.Data.Items[1].Suggestions
 }
 
 func (api *ZingMp3API) StreamFileSong(id string) *StreamingSongRes {
-	baseURL := "https://zingmp3.vn/api/v2/song/get/streaming"
-
+	path := "/api/v2/song/get/streaming"
 	ct := time.Now().Unix()
-	// Xây dựng query params động
+
 	params := url.Values{}
-	ct_params := fmt.Sprintf("%d", ct)
-	params.Add("ctime", ct_params)
+	params.Add("ctime", fmt.Sprintf("%d", ct))
 	params.Add("id", id)
-	params.Add("version", "1.13.0")
-	fmt.Println("===== ctime:", ct_params)
-	// n := strings.ReplaceAll(params.Encode(), "&", "")
-	n := fmt.Sprintf("ctime=%did=%sversion=%s", ct, id, "1.13.0")
-	sig := GenerateHash("/api/v2/song/get/streaming", n)
+	params.Add("version", "1.13.3")
 
-	fmt.Println("===== Generated Hash:", sig)
-
+	// Tạo signature
+	n := strings.ReplaceAll(params.Encode(), "&", "")
+	sig := GenerateHash(path, n)
 	params.Add("sig", sig)
-	params.Add("apiKey", "X5BM3w8N7MKozC0B85o4KMlzLZKhV00y")
+	params.Add("apiKey", api.apiKey)
 
-	// Tạo URL đầy đủ
-	fullURL := fmt.Sprintf("%s?%s", baseURL, params.Encode())
-
-	// Gửi request
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", fullURL, nil)
+	fullURL := api.buildRequestURL(api.url, path, params)
+	body, err := api.makeRequest("GET", fullURL, params, true)
 	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return nil
-	}
-
-	req.Header.Add("Cookie", "zmp3_rqid=MHwyMjIdUngMjUyLjE4LjM4fG51WeBGx8MTmUsIC0MDmUsICwNzgyMTM3OQ")
-
-	// Thực hiện request
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error sending request:", err)
-	}
-	defer resp.Body.Close()
-
-	// Đọc response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response:", err)
+		log.Error().Err(err).Msg("Error in StreamFileSong")
 		return nil
 	}
 
 	var raw map[string]json.RawMessage
-	err = json.Unmarshal(body, &raw)
-	if err != nil {
-		fmt.Println("Error unmarshalling JSON:", err)
+	if err := json.Unmarshal(body, &raw); err != nil {
+		log.Error().Err(err).Msg("Error unmarshalling JSON in StreamFileSong")
 		return nil
 	}
 
-	// In kết quả
-	fmt.Println(string(body))
+	var errCode int
+	if err := json.Unmarshal(raw["err"], &errCode); err != nil {
+		log.Error().Err(err).Msg("Error unmarshalling error code")
+		return nil
+	}
+
+	if errCode != 0 {
+		return nil
+	}
+
 	var data StreamingSongRes
-	err = json.Unmarshal(raw["data"], &data)
-	if err != nil {
-		log.Fatal().Msg("Can't decode response zing api")
+	if err := json.Unmarshal(raw["data"], &data); err != nil {
+		log.Error().Err(err).Msg("Error unmarshalling streaming data")
+		return nil
 	}
 
 	return &data
+}
+
+func (api *ZingMp3API) DetailSong(id string) (*SongDetail, error) {
+	path := "/api/v2/song/get/info"
+	ct := time.Now().Unix()
+
+	params := url.Values{}
+	params.Add("ctime", fmt.Sprintf("%d", ct))
+	params.Add("id", id)
+	params.Add("version", "1.13.3")
+	params.Add("sig", GenerateHash(path, params.Encode()))
+	params.Add("apiKey", api.apiKey)
+
+	fullURL := api.buildRequestURL(api.url, path, params)
+	body, err := api.makeRequest("GET", fullURL, params, true)
+	if err != nil {
+		return nil, err
+	}
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, common.NewCustomError(err, "Error unmarshalling JSON", "lỗi unmarshalling JSON", "DetailSong")
+	}
+
+	var song SongDetail
+	if err := json.Unmarshal(raw["data"], &song); err != nil {
+		return nil, common.NewCustomError(err, "Error unmarshalling song detail", "lỗi unmarshalling chi tiết bài hát", "DetailSong")
+	}
+
+	return &song, nil
 }
