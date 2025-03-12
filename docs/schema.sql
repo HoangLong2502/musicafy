@@ -1,6 +1,6 @@
 -- SQL dump generated using DBML (dbml.dbdiagram.io)
 -- Database: PostgreSQL
--- Generated at: 2025-02-28T03:51:53.003Z
+-- Generated at: 2025-03-12T07:15:32.511Z
 
 CREATE TYPE "gender" AS ENUM (
   'nam',
@@ -105,6 +105,32 @@ CREATE TABLE "genres" (
   "alias" varchar(255)
 );
 
+CREATE TABLE "song_file_mp3" (
+  "id" serial PRIMARY KEY,
+  "title" varchar(255),
+  "url" varchar(255) NOT NULL,
+  "description" varchar(255),
+  "is_vip" bool DEFAULT false,
+  "song" serial
+);
+
+CREATE TABLE "song_lyric" (
+  "id" serial PRIMARY KEY,
+  "song" serial UNIQUE,
+  "file" varchar(255),
+  "data" jsonb
+);
+
+CREATE TABLE "play_list" (
+  "id" serial PRIMARY KEY,
+  "title" varchar(255),
+  "users" serial,
+  "thumbnail" varchar,
+  "sort_description" varchar,
+  "created_at" timestamp DEFAULT (now()),
+  "is_private" bool DEFAULT false
+);
+
 ALTER TABLE "sessions" ADD FOREIGN KEY ("username") REFERENCES "users" ("username") ON DELETE CASCADE;
 
 ALTER TABLE "verifies" ADD FOREIGN KEY ("username") REFERENCES "users" ("username") ON DELETE CASCADE;
@@ -165,3 +191,20 @@ ALTER TABLE "albums_genres" ADD FOREIGN KEY ("albums_id") REFERENCES "albums" ("
 
 ALTER TABLE "albums_genres" ADD FOREIGN KEY ("genres_id") REFERENCES "genres" ("id");
 
+
+ALTER TABLE "song_file_mp3" ADD FOREIGN KEY ("song") REFERENCES "songs" ("id") ON DELETE CASCADE;
+
+ALTER TABLE "song_lyric" ADD FOREIGN KEY ("song") REFERENCES "songs" ("id") ON DELETE CASCADE;
+
+CREATE TABLE "play_list_songs" (
+  "play_list_id" serial,
+  "songs_id" serial,
+  PRIMARY KEY ("play_list_id", "songs_id")
+);
+
+ALTER TABLE "play_list_songs" ADD FOREIGN KEY ("play_list_id") REFERENCES "play_list" ("id");
+
+ALTER TABLE "play_list_songs" ADD FOREIGN KEY ("songs_id") REFERENCES "songs" ("id");
+
+
+ALTER TABLE "play_list" ADD FOREIGN KEY ("users") REFERENCES "users" ("id") ON DELETE CASCADE;

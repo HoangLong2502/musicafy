@@ -111,7 +111,6 @@ Table albums {
   sortDescription varchar(255)
   release_at int
 }
-
 Ref albums_artists: albums.id <> artists.id // many-to-many
 Ref albums_genres: albums.id <> genres.id // many-to-many
 
@@ -123,3 +122,34 @@ Table genres {
   alias varchar(255)
 }
 
+Table song_file_mp3 {
+  id serial [pk]
+  title varchar(255)
+  url varchar(255) [not null]
+  description varchar(255)
+  is_vip bool [default: false]
+  song serial
+}
+Ref: song_file_mp3.song > songs.id [delete: cascade]
+
+Table song_lyric {
+  id serial [pk]
+  song serial [unique]
+  file varchar(255)
+  data jsonb
+}
+Ref: songs.id - song_lyric.song [delete: cascade]
+
+Table play_list {
+  id serial [pk]
+  title varchar(255)
+  users serial
+  thumbnail varchar
+  sort_description varchar
+  created_at timestamp [default: `now()`]
+  is_private bool [default: false]
+
+}
+
+Ref: play_list.id <> songs.id [delete: cascade]
+Ref: play_list.users > users.id [delete: cascade]
