@@ -1,6 +1,6 @@
 -- SQL dump generated using DBML (dbml.dbdiagram.io)
 -- Database: PostgreSQL
--- Generated at: 2025-03-12T07:15:32.511Z
+-- Generated at: 2025-03-12T07:19:02.005Z
 
 CREATE TYPE "gender" AS ENUM (
   'nam',
@@ -20,9 +20,50 @@ CREATE TABLE "users" (
   "dob" timestamp,
   "active" bool NOT NULL DEFAULT true,
   "avatar" varchar(255),
+  "package" serial,
+  "package_expire" timestamptz,
   "updated_at" timestamptz,
   "password_changed_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
   "created_at" timestamptz NOT NULL DEFAULT (now())
+);
+
+CREATE TABLE "packages" (
+  "id" serial PRIMARY KEY,
+  "thumb" varchar,
+  "title" varchar,
+  "code" varchar,
+  "level" int DEFAULT 1,
+  "duration" int DEFAULT 0,
+  "description" varchar
+);
+
+CREATE TABLE "package_price" (
+  "id" serial PRIMARY KEY,
+  "title" varchar,
+  "code" varchar,
+  "recommend" bool DEFAULT false,
+  "price" float DEFAULT 0,
+  "description" varchar,
+  "package" serial
+);
+
+CREATE TABLE "payment" (
+  "id" serial PRIMARY KEY,
+  "code" varchar NOT NULL,
+  "user" serial
+);
+
+CREATE TABLE "transaction" (
+  "id" serial PRIMARY KEY,
+  "code" varchar,
+  "payment" serial,
+  "package" serial,
+  "value" float DEFAULT 0,
+  "discount" float DEFAULT 0,
+  "is_pair" bool DEFAULT false,
+  "pair_at" timestamp,
+  "log_preferred" jsonb,
+  "created_at" timestamp DEFAULT (now())
 );
 
 CREATE TABLE "sessions" (
@@ -130,6 +171,24 @@ CREATE TABLE "play_list" (
   "created_at" timestamp DEFAULT (now()),
   "is_private" bool DEFAULT false
 );
+
+COMMENT ON COLUMN "packages"."thumb" IS 'ảnh cover';
+
+COMMENT ON COLUMN "packages"."duration" IS 'đơn vị giây';
+
+COMMENT ON COLUMN "payment"."code" IS 'PM_{user.id}_{random}';
+
+COMMENT ON COLUMN "transaction"."code" IS 'mã giao dịch';
+
+ALTER TABLE "users" ADD FOREIGN KEY ("package") REFERENCES "packages" ("id") ON DELETE SET NULL;
+
+ALTER TABLE "package_price" ADD FOREIGN KEY ("package") REFERENCES "packages" ("id") ON DELETE CASCADE;
+
+ALTER TABLE "payment" ADD FOREIGN KEY ("user") REFERENCES "users" ("id") ON DELETE CASCADE;
+
+ALTER TABLE "transaction" ADD FOREIGN KEY ("payment") REFERENCES "payment" ("id") ON DELETE CASCADE;
+
+ALTER TABLE "transaction" ADD FOREIGN KEY ("package") REFERENCES "packages" ("id") ON DELETE SET NULL;
 
 ALTER TABLE "sessions" ADD FOREIGN KEY ("username") REFERENCES "users" ("username") ON DELETE CASCADE;
 

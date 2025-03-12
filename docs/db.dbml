@@ -25,10 +25,60 @@ Table users as U {
   dob timestamp
   active bool [not null, default: true]
   avatar varchar(255)
+  package serial
+  package_expire timestamptz [null]
   updated_at timestamptz
   password_changed_at timestamptz [not null, default: '0001-01-01 00:00:00Z']
   created_at timestamptz [not null, default: `now()`]
 }
+
+Ref: U.package > packages.id [delete: set null]
+
+Table packages {
+  id serial [pk]
+  thumb varchar [note: 'ảnh cover']
+  title varchar
+  code varchar
+  level int [default: 1]
+  duration int [default: 0, note: 'đơn vị giây']
+  description varchar
+}
+
+Table package_price {
+  id serial [pk]
+  title varchar
+  code varchar
+  recommend bool [default: false]
+  price float [default: 0]
+  description varchar
+  package serial
+}
+
+Ref: package_price.package > packages.id [delete: cascade]
+
+Table payment {
+  id serial [pk]
+  code varchar [not null, note: 'PM_{user.id}_{random}']
+  user serial
+}
+
+Ref: payment.user > U.id [delete: cascade]
+
+Table transaction {
+  id serial [pk]
+  code varchar [note: 'mã giao dịch']
+  payment serial
+  package serial
+  value float [default: 0]
+  discount float [default: 0]
+  is_pair bool [default: false]
+  pair_at timestamp [null]
+  log_preferred jsonb
+  created_at timestamp [default: `now()`]
+}
+
+Ref: transaction.payment > payment.id [delete: cascade]
+Ref: transaction.package > packages.id [delete: set null]
 
 Table sessions {
   id serial [pk]
